@@ -1,9 +1,3 @@
 #!/bin/bash
-
-echo "تشغيل السكربت..."
-
-# تثبيت المتطلبات
-pip install -r requirements.txt
-
-# تشغيل السكربت
+echo "تشغيل البوت..."
 python3 main.py
