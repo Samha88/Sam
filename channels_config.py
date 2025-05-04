@@ -28,7 +28,7 @@ channels_config = {
         "bot": "@Ichancy_basel_bot"
     },
     "ichancyDragon": {
-        "username": "sam91uyy1",
+        "username": "ichancy_Bot_Dragon",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@ichancy_dragon_bot"
     },
