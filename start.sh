@@ -6,4 +6,4 @@ echo "تشغيل السكربت..."
 pip install -r requirements.txt
 
 # تشغيل السكربت
-python3 bot.py
+python3 main.py
