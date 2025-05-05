@@ -1,10 +1,10 @@
 # هذا الملف يحتوي على إعدادات القنوات التي سيتم مراقبتها
 
 channels_config = {
-    "ichancy_saw": {
-        "username": "ichancy_saw",
+    "ichancy_zeus": {
+        "username": "ichancyzeusbot",
         "regex": r"\b[a-zA-Z0-9]{8,12}\b",
-        "bot": "@ichancy_saw_bot"
+        "bot": "@Ichancy_zeus_bot"
     },
     "ichancyTheKing": {
         "username": "ichancyTheKing",
