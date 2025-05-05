@@ -1,6 +1,6 @@
 import asyncio
 import re
-from telethon import TelegramClient, events
+from telethon import TelegramClient, events, Button
 from aiohttp import web
 from channels_config import channels_config  # استيراد القنوات من ملف خارجي
 
@@ -73,12 +73,44 @@ async def monitor_handler(event):
 
         match = re.findall(config["regex"], event.message.message)
         if match:
-            if config.get("pick_third") and len(match) >= 3:
-                code = match[2]
-            else:
-                code = match[0]
-            await client.send_message(config["bot"], code)
-            print(f"أُرسل الكود: {code} إلى {config['bot']}")
+            code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
+            bot = config["bot"]
+
+            # إرسال /start
+            await client.send_message(bot, '/start')
+            await asyncio.sleep(2)
+
+            # الضغط على زر فيه "كود"
+            async for msg in client.iter_messages(bot, limit=5):
+                if msg.buttons:
+                    found = False
+                    for row in msg.buttons:
+                        for button in row:
+                            if 'كود' in button.text:
+                                await button.click()
+                                await asyncio.sleep(1)
+                                found = True
+                                break
+                        if found:
+                            break
+                    if found:
+                        break
+
+            # إرسال الكود
+            await client.send_message(bot, code)
+            await asyncio.sleep(1)
+
+            # محاولة الضغط على زر فيه "إرسال"
+            async for msg in client.iter_messages(bot, limit=5):
+                if msg.buttons:
+                    for row in msg.buttons:
+                        for button in row:
+                            if 'إرسال' in button.text or 'ارسال' in button.text:
+                                await button.click()
+                                break
+                    break
+
+            print(f"تم إرسال الكود: {code} إلى البوت: {bot}")
             break
 
 # Web service
