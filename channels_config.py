@@ -11,6 +11,11 @@ channels_config = {
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@Ichancy_TheKingBot"
     },
+    "IchancyTeacher": {
+        "username": "ichancyteacherbot",
+        "regex": r"\b[a-zA-Z0-9]{5,}\b",
+        "bot": "@teacher_ichancy_bot"
+    },
     "IchancyDiamond": {
         "username": "diamondichancy",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
