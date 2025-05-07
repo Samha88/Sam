@@ -41,7 +41,7 @@ channels_config = {
         "bot": "@almalaki_ichancy_bot"
     },
     "superGiftBot": {
-        "username": "sam91uyy1",
+        "username": "almalaki_ichancy_bot",
         "regex": r"\b[a-zA-Z0-9]{8,12}\b",
         "bot": "@almalaki_ichancy_bot"
     },
