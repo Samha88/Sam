@@ -1,5 +1,3 @@
-# هذا الملف يحتوي على إعدادات القنوات التي سيتم مراقبتها
-
 channels_config = {
     "ichancy_zeus": {
         "username": "ichancyzeusbot",
@@ -40,6 +38,11 @@ channels_config = {
     "usd1": {
         "username": "almalaki_ichancy",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
+        "bot": "@almalaki_ichancy_bot"
+    },
+    "superGiftBot": {
+        "username": "Pdf2img_bot",
+        "regex": r"\b[a-zA-Z0-9]{8,12}\b",
         "bot": "@almalaki_ichancy_bot"
     }
 }
