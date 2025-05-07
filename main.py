@@ -1,6 +1,6 @@
 import asyncio
 import re
-from telethon import TelegramClient, events, Button
+from telethon import TelegramClient, events
 from aiohttp import web
 from channels_config import channels_config  # استيراد القنوات من ملف خارجي
 
@@ -68,22 +68,22 @@ async def monitor_handler(event):
 
     for name in selected_channels:
         config = channels_config[name]
-        if event.chat.username != config["username"]:
-            continue
-
         match = re.findall(config["regex"], event.message.message)
         if not match:
+            continue
+
+        # تحقق من أن الرسالة من القناة/البوت الصحيح
+        if event.chat.username != config["username"]:
             continue
 
         code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
         bot = config["bot"]
 
-        # إذا كان المصدر البوت نفسه
-        if event.chat.username == bot.replace("@", ""):
+        try:
             await client.send_message(bot, '/start')
-            await asyncio.sleep(2)
+            await asyncio.sleep(0.5)
 
-            # البحث عن زر "كود" والضغط عليه
+            # الضغط على زر يحتوي "كود"
             async for msg in client.iter_messages(bot, limit=5):
                 if msg.buttons:
                     found = False
@@ -91,7 +91,7 @@ async def monitor_handler(event):
                         for button in row:
                             if 'كود' in button.text:
                                 await button.click()
-                                await asyncio.sleep(1)
+                                await asyncio.sleep(0.5)
                                 found = True
                                 break
                         if found:
@@ -99,27 +99,29 @@ async def monitor_handler(event):
                 if found:
                     break
 
-            # بعد الضغط على زر "كود"، إرسال الكود
+            # إرسال الكود
             await client.send_message(bot, code)
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
 
-            # البحث عن زر "إرسال" أو "ارسال" والضغط عليه
+            # الضغط على زر "إرسال" أو "ارسال"
             async for msg in client.iter_messages(bot, limit=5):
                 if msg.buttons:
+                    sent = False
                     for row in msg.buttons:
                         for button in row:
                             if 'إرسال' in button.text or 'ارسال' in button.text:
                                 await button.click()
+                                sent = True
                                 break
-                    break
+                        if sent:
+                            break
+                    if sent:
+                        break
 
             print(f"تم التفاعل الكامل مع البوت: {bot} باستخدام الكود: {code}")
             break
-
-        # إذا كان الكود جاي من قناة
-        else:
-            await client.send_message(bot, code)
-            print(f"تم إرسال الكود: {code} إلى البوت: {bot}")
+        except Exception as e:
+            print(f"خطأ أثناء التفاعل مع البوت {bot}: {e}")
             break
 
 # Web service
