@@ -22,7 +22,7 @@ async def start_handler(event):
     if event.chat_id not in allowed_chat_ids:
         return
     await event.respond(
-        "مرحباً! أرسل أسماء القنوات التي تريد مراقبتها، مفصولة بفاصلة.\n"
+        "مرحباً! أرسل أسماء القنوات أو البوتات التي تريد مراقبتها، مفصولة بفاصلة.\n"
         "مثال:\n"
         "ichancy_saw, ichancyTheKing\n\n"
         "ثم أرسل كلمة 's' لبدء المراقبة، أو 'st' لإيقافها."
@@ -42,7 +42,7 @@ async def handle_user_commands(event):
 
     if message.lower() == "s":
         if not selected_channels:
-            await event.respond("الرجاء اختيار القنوات أولاً.")
+            await event.respond("الرجاء اختيار القنوات أو البوتات أولاً.")
             return
         monitoring_active = True
         await event.respond("تم تفعيل المراقبة.")
@@ -53,34 +53,36 @@ async def handle_user_commands(event):
         await event.respond("تم إيقاف المراقبة.")
 
     else:
-        possible_channels = [name.strip() for name in message.split(',')]
-        if all(name in channels_config for name in possible_channels):
-            selected_channels = set(possible_channels)
-            await event.respond(f"تم اختيار القنوات: {', '.join(selected_channels)}")
+        possible = [name.strip() for name in message.split(',')]
+        if all(name in channels_config for name in possible):
+            selected_channels = set(possible)
+            await event.respond(f"تم اختيار: {', '.join(selected_channels)}")
         else:
-            await event.respond("بعض القنوات غير صحيحة، تأكد من كتابتها بشكل دقيق.")
+            await event.respond("بعض الأسماء غير صحيحة، تأكد من كتابتها بشكل دقيق.")
 
 @client.on(events.NewMessage)
 async def monitor_handler(event):
     global monitoring_active
-    if not monitoring_active:
+    if not monitoring_active or not event.message.message:
         return
 
-    for channel_name in selected_channels:
-        config = channels_config[channel_name]
+    for name in selected_channels:
+        config = channels_config[name]
         if event.chat.username != config["username"]:
             continue
 
         match = re.findall(config["regex"], event.message.message)
-        if match:
-            code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
-            bot = config["bot"]
+        if not match:
+            continue
 
-            # إرسال /start
+        code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
+        bot = config["bot"]
+
+        # إذا كان المصدر البوت نفسه
+        if event.chat.username == bot.replace("@", ""):
             await client.send_message(bot, '/start')
             await asyncio.sleep(2)
 
-            # الضغط على زر فيه "كود"
             async for msg in client.iter_messages(bot, limit=5):
                 if msg.buttons:
                     found = False
@@ -93,14 +95,12 @@ async def monitor_handler(event):
                                 break
                         if found:
                             break
-                    if found:
-                        break
+                if found:
+                    break
 
-            # إرسال الكود
             await client.send_message(bot, code)
             await asyncio.sleep(1)
 
-            # محاولة الضغط على زر فيه "إرسال"
             async for msg in client.iter_messages(bot, limit=5):
                 if msg.buttons:
                     for row in msg.buttons:
@@ -110,6 +110,12 @@ async def monitor_handler(event):
                                 break
                     break
 
+            print(f"تم التفاعل الكامل مع البوت: {bot} باستخدام الكود: {code}")
+            break
+
+        # إذا كان الكود جاي من قناة
+        else:
+            await client.send_message(bot, code)
             print(f"تم إرسال الكود: {code} إلى البوت: {bot}")
             break
 
