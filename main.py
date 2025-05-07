@@ -96,7 +96,7 @@ async def monitor_handler(event):
             if found:
                 break
 
-        # إرسال الكود مباشرة بعد الضغط على زر "كود"
+        # إرسال الكود مباشرة بعد الضغط على زر "كود" (دون تأخير)
         await client.send_message(bot, code)
 
         # البحث عن زر "إرسال" أو "ارسال" والضغط عليه
