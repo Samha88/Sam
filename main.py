@@ -79,7 +79,7 @@ async def monitor_handler(event):
         bot = config["bot"]
 
         await client.send_message(bot, '/start')
-        await asyncio.sleep(2)  # انتظار بعد إرسال /start
+        await asyncio.sleep(1)  # تقليل الانتظار بعد /start
 
         # البحث عن زر "كود" والضغط عليه
         found = False
@@ -99,7 +99,7 @@ async def monitor_handler(event):
         # إرسال الكود مباشرة بعد الضغط على زر "كود"
         await client.send_message(bot, code)
 
-        # البحث عن زر "إرسال" أو "ارسال"
+        # البحث عن زر "إرسال" أو "ارسال" والضغط عليه
         async for msg in client.iter_messages(bot, limit=5):
             if msg.buttons:
                 for row in msg.buttons:
