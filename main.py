@@ -81,7 +81,7 @@ async def monitor_handler(event):
 
         try:
             await client.send_message(bot, '/start')
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.05)
 
             # الضغط على زر يحتوي "كود"
             async for msg in client.iter_messages(bot, limit=5):
@@ -91,7 +91,7 @@ async def monitor_handler(event):
                         for button in row:
                             if 'كود' in button.text:
                                 await button.click()
-                                await asyncio.sleep(0.5)
+                                await asyncio.sleep(0.05)
                                 found = True
                                 break
                         if found:
@@ -101,7 +101,7 @@ async def monitor_handler(event):
 
             # إرسال الكود
             await client.send_message(bot, code)
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.05)
 
             # الضغط على زر "إرسال" أو "ارسال"
             async for msg in client.iter_messages(bot, limit=5):
