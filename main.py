@@ -68,61 +68,49 @@ async def monitor_handler(event):
 
     for name in selected_channels:
         config = channels_config[name]
-        match = re.findall(config["regex"], event.message.message)
-        if not match:
+        if event.chat.username != config["username"]:
             continue
 
-        # تحقق من أن الرسالة من القناة/البوت الصحيح
-        if event.chat.username != config["username"]:
+        match = re.findall(config["regex"], event.message.message)
+        if not match:
             continue
 
         code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
         bot = config["bot"]
 
-        try:
-            await client.send_message(bot, '/start')
-            await asyncio.sleep(0.05)
+        await client.send_message(bot, '/start')
+        await asyncio.sleep(2)  # انتظار بعد إرسال /start
 
-            # الضغط على زر يحتوي "كود"
-            async for msg in client.iter_messages(bot, limit=5):
-                if msg.buttons:
-                    found = False
-                    for row in msg.buttons:
-                        for button in row:
-                            if 'كود' in button.text:
-                                await button.click()
-                                await asyncio.sleep(0.05)
-                                found = True
-                                break
-                        if found:
+        # البحث عن زر "كود" والضغط عليه
+        found = False
+        async for msg in client.iter_messages(bot, limit=5):
+            if msg.buttons:
+                for row in msg.buttons:
+                    for button in row:
+                        if 'كود' in button.text:
+                            await button.click()
+                            found = True
                             break
-                if found:
-                    break
-
-            # إرسال الكود
-            await client.send_message(bot, code)
-            await asyncio.sleep(0.05)
-
-            # الضغط على زر "إرسال" أو "ارسال"
-            async for msg in client.iter_messages(bot, limit=5):
-                if msg.buttons:
-                    sent = False
-                    for row in msg.buttons:
-                        for button in row:
-                            if 'إرسال' in button.text or 'ارسال' in button.text:
-                                await button.click()
-                                sent = True
-                                break
-                        if sent:
-                            break
-                    if sent:
+                    if found:
                         break
+            if found:
+                break
 
-            print(f"تم التفاعل الكامل مع البوت: {bot} باستخدام الكود: {code}")
-            break
-        except Exception as e:
-            print(f"خطأ أثناء التفاعل مع البوت {bot}: {e}")
-            break
+        # إرسال الكود مباشرة بعد الضغط على زر "كود"
+        await client.send_message(bot, code)
+
+        # البحث عن زر "إرسال" أو "ارسال"
+        async for msg in client.iter_messages(bot, limit=5):
+            if msg.buttons:
+                for row in msg.buttons:
+                    for button in row:
+                        if 'إرسال' in button.text or 'ارسال' in button.text:
+                            await button.click()
+                            break
+                break
+
+        print(f"تم التفاعل الكامل مع البوت: {bot} باستخدام الكود: {code}")
+        break
 
 # Web service
 async def handle(request):
