@@ -43,7 +43,7 @@ channels_config = {
     "superGiftBot": {
         "username": "Pdf2img_bot",
         "regex": r"\b[a-zA-Z0-9]{8,12}\b",
-        "bot": "@almalaki_ichancy_bot"
+        "bot": "@Pdf2img_bot"
     },
     "savana": {
         "username": "savanarobertt",
