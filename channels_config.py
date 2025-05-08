@@ -35,19 +35,34 @@ channels_config = {
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@ichancy_dragon_bot"
     },
-    "usd1": {
+    "Malaki": {
         "username": "almalaki_ichancy",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@almalaki_ichancy_bot"
     },
-    "superGiftBot": {
-        "username": "almalaki_ichancy_bot",
+    "Usd1": {
+        "username": "sam91uyy1",
         "regex": r"\b[a-zA-Z0-9]{8,12}\b",
-        "bot": "@almalaki_ichancy_bot"
+        "bot": "@ichancy_usd_bot"
+    },
+    "Usd2": {
+        "username": "IchancyUsd",
+        "regex": r"\b[a-zA-Z0-9]{5,}\b",
+        "bot": "@ichancy_tiger_usd_bot"
+    },
+    "Usd3": {
+        "username": "AlcontBotUSD",
+        "regex": r"\b[a-zA-Z0-9]{5,}\b",
+        "bot": "@ichancy_alcont_usd_bot"
+    },
+    "Usd4": {
+        "username": "ichancy_bettingusd_bot",
+        "regex": r"\b[a-zA-Z0-9]{5,}\b",
+        "bot": "@ichancy_betting_usd_bot"
     },
     "savana": {
         "username": "savanarobertt",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@ichancy_savana_bot"
-    }
+    }. 
 }
