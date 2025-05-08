@@ -41,7 +41,7 @@ channels_config = {
         "bot": "@almalaki_ichancy_bot"
     },
     "Usd1": {
-        "username": "sam91uyy1",
+        "username": "Ichancy_Usd",
         "regex": r"\b[a-zA-Z0-9]{8,12}\b",
         "bot": "@ichancy_usd_bot"
     },
