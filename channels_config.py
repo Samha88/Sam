@@ -64,5 +64,6 @@ channels_config = {
         "username": "sam91uyy1",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@ichancy_savana_bot"
+        "pick_third": True
     } 
 }
