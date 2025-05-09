@@ -2,17 +2,14 @@ import asyncio
 import re
 from telethon import TelegramClient, events
 from aiohttp import web
-from channels_config import channels_config  # استيراد القنوات من ملف خارجي
+from channels_config import channels_config
 
-# معلومات حساب تيليجرام
 api_id = 22707838
 api_hash = '7822c50291a41745fa5e0d63f21bbfb6'
 session_name = 'my_session'
 
-# معرف المستخدم المسموح له بالتفاعل مع البوت
 allowed_chat_ids = {8113892076}
 
-# تهيئة العميل
 client = TelegramClient(session_name, api_id, api_hash)
 selected_channels = set()
 monitoring_active = False
@@ -66,12 +63,24 @@ async def monitor_handler(event):
     if not monitoring_active or not event.message.message:
         return
 
+    # طباعة معلومات لتتبع مصدر الرسالة
+    print("=== رسالة جديدة ===")
+    print(f"chat_id: {event.chat_id}")
+    print(f"username: {event.chat.username}")
+    print(f"title: {event.chat.title}")
+    print(f"message: {event.message.message}")
+
     for name in selected_channels:
         config = channels_config[name]
-        if event.chat.username != config["username"]:
+        config_username = config["username"].lower()
+        chat_username = (event.chat.username or "").lower()
+        chat_title = (event.chat.title or "").lower()
+
+        if config_username not in (chat_username, chat_title):
             continue
 
         match = re.findall(config["regex"], event.message.message)
+        print(f"Regex match result: {match}")
         if not match:
             continue
 
@@ -79,9 +88,8 @@ async def monitor_handler(event):
         bot = config["bot"]
 
         await client.send_message(bot, '/start')
-        await asyncio.sleep(1)  # تقليل الانتظار بعد /start
+        await asyncio.sleep(1)
 
-        # البحث عن زر "كود" والضغط عليه
         found = False
         async for msg in client.iter_messages(bot, limit=5):
             if msg.buttons:
@@ -96,10 +104,8 @@ async def monitor_handler(event):
             if found:
                 break
 
-        # إرسال الكود مباشرة بعد الضغط على زر "كود" (دون تأخير)
         await client.send_message(bot, code)
 
-        # البحث عن زر "إرسال" أو "ارسال" والضغط عليه
         async for msg in client.iter_messages(bot, limit=5):
             if msg.buttons:
                 for row in msg.buttons:
