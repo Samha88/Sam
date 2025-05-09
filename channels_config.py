@@ -61,7 +61,7 @@ channels_config = {
         "bot": "@ichancy_betting_usd_bot"
     },
     "savana": {
-        "username": "savanarobertt",
+        "username": "sam91uyy1",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@ichancy_savana_bot"
     } 
