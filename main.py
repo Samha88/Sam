@@ -2,12 +2,12 @@ import asyncio
 import re
 from telethon import TelegramClient, events
 from aiohttp import web
-from channels_config import channels_config
+from channels_config import channels_config  # ← استيراد من ملف خارجي
 
+# معلومات تيليجرام
 api_id = 22707838
 api_hash = '7822c50291a41745fa5e0d63f21bbfb6'
 session_name = 'my_session'
-
 allowed_chat_ids = {8113892076}
 
 client = TelegramClient(session_name, api_id, api_hash)
@@ -19,7 +19,7 @@ async def start_handler(event):
     if event.chat_id not in allowed_chat_ids:
         return
     await event.respond(
-        "مرحباً! أرسل أسماء القنوات أو البوتات التي تريد مراقبتها، مفصولة بفاصلة.\n"
+        "مرحباً! أرسل أسماء القنوات التي تريد مراقبتها، مفصولة بفاصلة.\n"
         "مثال:\n"
         "ichancy_saw, ichancyTheKing\n\n"
         "ثم أرسل كلمة 's' لبدء المراقبة، أو 'st' لإيقافها."
@@ -28,7 +28,6 @@ async def start_handler(event):
 @client.on(events.NewMessage)
 async def handle_user_commands(event):
     global selected_channels, monitoring_active
-
     if event.chat_id not in allowed_chat_ids:
         return
 
@@ -39,7 +38,7 @@ async def handle_user_commands(event):
 
     if message.lower() == "s":
         if not selected_channels:
-            await event.respond("الرجاء اختيار القنوات أو البوتات أولاً.")
+            await event.respond("الرجاء اختيار القنوات أولاً.")
             return
         monitoring_active = True
         await event.respond("تم تفعيل المراقبة.")
@@ -50,25 +49,18 @@ async def handle_user_commands(event):
         await event.respond("تم إيقاف المراقبة.")
 
     else:
-        possible = [name.strip() for name in message.split(',')]
-        if all(name in channels_config for name in possible):
-            selected_channels = set(possible)
-            await event.respond(f"تم اختيار: {', '.join(selected_channels)}")
+        possible_channels = [name.strip() for name in message.split(',')]
+        if all(name in channels_config for name in possible_channels):
+            selected_channels = set(possible_channels)
+            await event.respond(f"تم اختيار القنوات: {', '.join(selected_channels)}")
         else:
-            await event.respond("بعض الأسماء غير صحيحة، تأكد من كتابتها بشكل دقيق.")
+            await event.respond("بعض القنوات غير صحيحة، تأكد من كتابتها.")
 
 @client.on(events.NewMessage)
 async def monitor_handler(event):
     global monitoring_active
     if not monitoring_active or not event.message.message:
         return
-
-    # طباعة معلومات لتتبع مصدر الرسالة
-    print("=== رسالة جديدة ===")
-    print(f"chat_id: {event.chat_id}")
-    print(f"username: {event.chat.username}")
-    print(f"title: {event.chat.title}")
-    print(f"message: {event.message.message}")
 
     for name in selected_channels:
         config = channels_config[name]
@@ -80,7 +72,6 @@ async def monitor_handler(event):
             continue
 
         match = re.findall(config["regex"], event.message.message)
-        print(f"Regex match result: {match}")
         if not match:
             continue
 
@@ -90,6 +81,7 @@ async def monitor_handler(event):
         await client.send_message(bot, '/start')
         await asyncio.sleep(1)
 
+        # البحث عن زر يحتوي على كلمة "كود"
         found = False
         async for msg in client.iter_messages(bot, limit=5):
             if msg.buttons:
@@ -115,10 +107,10 @@ async def monitor_handler(event):
                             break
                 break
 
-        print(f"تم التفاعل الكامل مع البوت: {bot} باستخدام الكود: {code}")
+        print(f"تم التفاعل مع البوت {bot} باستخدام الكود: {code}")
         break
 
-# Web service
+# Web server
 async def handle(request):
     return web.Response(text="Bot is running!")
 
