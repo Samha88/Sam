@@ -86,19 +86,8 @@ client = TelegramClient(session_name, api_id, api_hash)
 selected_channels = set()
 monitoring_active = False
 
-@client.on(events.NewMessage(pattern='/start'))
-async def start_handler(event):
-    if event.chat_id not in allowed_chat_ids:
-        return
-    await event.respond(
-        "مرحباً! أرسل أسماء القنوات التي تريد مراقبتها، مفصولة بفاصلة.\n"
-        "مثال:\n"
-        "ichancy_zeus, ichancyTheKing\n\n"
-        "ثم أرسل كلمة 's' لبدء المراقبة، أو 'st' لإيقافها."
-    )
-
 @client.on(events.NewMessage)
-async def handle_user_commands(event):
+async def unified_handler(event):
     global selected_channels, monitoring_active
 
     if event.chat_id not in allowed_chat_ids:
@@ -106,92 +95,90 @@ async def handle_user_commands(event):
 
     message = event.raw_text.strip()
 
-    if message.startswith('/'):
+    # /start
+    if message == "/start":
+        await event.respond(
+            "مرحباً! أرسل أسماء القنوات التي تريد مراقبتها، مفصولة بفاصلة.\n"
+            "مثال:\n"
+            "ichancy_zeus, ichancyTheKing\n\n"
+            "ثم أرسل كلمة 's' لبدء المراقبة، أو 'st' لإيقافها."
+        )
         return
 
+    # بدء أو إيقاف المراقبة
     if message.lower() == "s":
         if not selected_channels:
             await event.respond("الرجاء اختيار القنوات أولاً.")
             return
         monitoring_active = True
         await event.respond("تم تفعيل المراقبة.")
+        return
 
     elif message.lower() == "st":
         selected_channels.clear()
         monitoring_active = False
         await event.respond("تم إيقاف المراقبة.")
-
-    else:
-        possible_channels = [name.strip() for name in message.split(',')]
-        if all(name in channels_config for name in possible_channels):
-            selected_channels = set(possible_channels)
-            await event.respond(f"تم اختيار القنوات: {', '.join(selected_channels)}")
-        else:
-            await event.respond("بعض القنوات غير صحيحة، تأكد من كتابتها بشكل دقيق.")
-
-@client.on(events.NewMessage)
-async def monitor_handler(event):
-    global monitoring_active
-    if not monitoring_active:
         return
 
-    for channel_name in selected_channels:
-        config = channels_config[channel_name]
-        if event.chat.username != config["username"]:
-            continue
+    # تحديد القنوات
+    possible_channels = [name.strip() for name in message.split(',')]
+    if all(name in channels_config for name in possible_channels):
+        selected_channels = set(possible_channels)
+        await event.respond(f"تم اختيار القنوات: {', '.join(selected_channels)}")
+        return
 
-        match = re.findall(config["regex"], event.message.message)
-        if match:
-            try:
-                code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
+    # مراقبة الرسائل من القنوات
+    if monitoring_active and event.chat and getattr(event.chat, 'username', None):
+        for channel_name in selected_channels:
+            config = channels_config[channel_name]
+            if event.chat.username != config["username"]:
+                continue
 
-                bot = config["bot"]
-                async with client.conversation(bot, timeout=30) as conv:
-                    await conv.send_message('/start')
-                    response = await conv.get_response()
+            match = re.findall(config["regex"], event.message.message)
+            if match:
+                try:
+                    code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
+                    bot = config["bot"]
 
-                    # التعامل مع زر فيه كلمة "كود"
-                    button_pressed = False
-                    btns = response.buttons or []
-                    for row in btns:
-                        if isinstance(row, list):
-                            for btn in row:
+                    async with client.conversation(bot, timeout=30) as conv:
+                        await conv.send_message('/start')
+                        response = await conv.get_response()
+
+                        # الضغط على زر "كود"
+                        button_pressed = False
+                        for row in response.buttons or []:
+                            for btn in (row if isinstance(row, list) else [row]):
                                 if 'كود' in btn.text:
                                     await btn.click()
                                     button_pressed = True
                                     break
-                        else:
-                            if 'كود' in row.text:
-                                await row.click()
-                                button_pressed = True
-                        if button_pressed:
-                            break
+                            if button_pressed:
+                                break
 
-                    if not button_pressed:
+                        if not button_pressed:
+                            await client.send_message(
+                                list(allowed_chat_ids)[0],
+                                f"ما تم العثور على زر 'كود' في البوت {bot} بعد /start"
+                            )
+                            return
+
+                        await conv.send_message(code)
                         await client.send_message(
                             list(allowed_chat_ids)[0],
-                            f"ما تم العثور على زر 'كود' في البوت {bot} بعد /start"
+                            f"تم استخراج كود من قناة @{config['username']}:\n"
+                            f"الكود: `{code}`\n"
+                            f"تم إرساله إلى البوت: {bot}"
                         )
-                        return
 
-                    await conv.send_message(code)
-
+                    print(f"أُرسل الكود: {code} إلى {bot}")
+                except Exception as e:
                     await client.send_message(
                         list(allowed_chat_ids)[0],
-                        f"تم استخراج كود من قناة @{config['username']}:\n"
-                        f"الكود: `{code}`\n"
-                        f"تم إرساله إلى البوت: {bot}"
+                        f"حصل خطأ أثناء التعامل مع البوت {config['bot']}:\n{str(e)}"
                     )
+                break
 
-                print(f"أُرسل الكود: {code} إلى {bot}")
-            except Exception as e:
-                await client.send_message(
-                    list(allowed_chat_ids)[0],
-                    f"حصل خطأ أثناء التعامل مع البوت {config['bot']}:\n{str(e)}"
-                )
-            break
-
-# Web Service
+# Web service
 async def handle(request):
     return web.Response(text="Bot is running!")
 
