@@ -9,7 +9,7 @@ api_hash = '7822c50291a41745fa5e0d63f21bbfb6'
 session_name = 'my_session.session'
 
 # معرف المستخدم المسموح له بالتفاعل مع البوت
-allowed_chat_ids = {8113892076}  # ← معرفك الشخصي
+allowed_chat_ids = {8113892076}
 
 # ملف القنوات
 channels_config = {
@@ -154,15 +154,15 @@ async def monitor_handler(event):
                     button_pressed = False
                     btns = response.buttons or []
                     for row in btns:
-                        if isinstance(row, list):  # صف أزرار
+                        if isinstance(row, list):
                             for btn in row:
                                 if 'كود' in btn.text:
-                                    await conv.send_message(btn)
+                                    await btn.click()
                                     button_pressed = True
                                     break
-                        else:  # زر فردي
+                        else:
                             if 'كود' in row.text:
-                                await conv.send_message(row)
+                                await row.click()
                                 button_pressed = True
                         if button_pressed:
                             break
