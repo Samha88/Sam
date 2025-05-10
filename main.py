@@ -7,7 +7,7 @@ from aiohttp import web
 # معلومات حساب تيليجرام
 api_id = 22707838
 api_hash = '7822c50291a41745fa5e0d63f21bbfb6'
-session_name = '8113892076'
+session_name = 'my_session.session'
 
 # معرف المستخدم المسموح له بالتفاعل مع البوت
 allowed_chat_ids = {8113892076}  # ← معرفك الشخصي
