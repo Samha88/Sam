@@ -1,214 +1,120 @@
-import asyncio
-import re
-from telethon import TelegramClient, events
-from aiohttp import web
+import asyncio import re from telethon import TelegramClient, events from aiohttp import web
 
-# Telegram credentials
-api_id = 22707838
-api_hash = '7822c50291a41745fa5e0d63f21bbfb6'
-session_name = 'my_session.session'
+Telegram credentials
 
-# Admin user ID
+api_id = 22707838 api_hash = '7822c50291a41745fa5e0d63f21bbfb6' session_name = 'my_session.session'
+
+Allowed user
+
 allowed_chat_ids = {8113892076}
 
-# Channel configs
-channels_config = {
-    "ichancy_zeus": {
-        "username": "ichancyzeusbot",
-        "regex": r"\b[a-zA-Z0-9]{8,12}\b",
-        "bot": "@Ichancy_zeus_bot"
-    },
-    "ichancyTheKing": {
-        "username": "ichancyTheKing",
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@Ichancy_TheKingBot"
-    },
-    "IchancyTeacher": {
-        "username": "ichancyteacherbot",
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@teacher_ichancy_bot"
-    },
-    "IchancyDiamond": {
-        "username": "diamondichancy",
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@DiamondIchancyBot"
-    },
-    "captain_ichancy": {
-        "username": "captain_ichancy",
-        "regex": r"\b[a-zA-Z0-9]{6,12}\b",
-        "bot": "@ichancy_captain_bot",
-        "pick_third": True
-    },
-    "IchancyBasel": {
-        "username": "basel2255",
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@Ichancy_basel_bot"
-    },
-    "ichancyDragon": {
-        "username": "ichancy_Bot_Dragon",
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@ichancy_dragon_bot"
-    },
-    "Malaki": {
-        "username": "almalaki_ichancy",
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@almalaki_ichancy_bot"
-    },
-    "Usd1": {
-        "username": "Ichancy_Usd",
-        "regex": r"\b[a-zA-Z0-9]{8,12}\b",
-        "bot": "@ichancy_usd_bot"
-    },
-    "Usd2": {
-        "username": "IchancyUsd",
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@ichancy_tiger_usd_bot"
-    },
-    "Usd3": {
-        "username": "AlcontBotUSD",
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@ichancy_alcont_usd_bot"
-    },
-    "Usd4": {
-        "username": "ichancy_bettingusd_bot",
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@ichancy_betting_usd_bot"
-    },
-    "savana": {
-        "username": "savanarobertt",
-        "regex": r"\b[a-zA-Z0-9]{8,12}\b",
-        "bot": "@ichancy_savana_bot",
-        "pick_third": True
-    }
-}
+Channel configuration using chat_id
 
-client = TelegramClient(session_name, api_id, api_hash)
-selected_channels = set()
-monitoring_active = False
-log_buffer = []
+channels_config = { "ichancy_zeus": { "chat_id": 2326208433, "regex": r"\b[a-zA-Z0-9]{8,12}\b", "bot": "@Ichancy_zeus_bot" }, "ichancyTheKing": { "chat_id": 2176585065, "regex": r"\b[a-zA-Z0-9]{5,}\b", "bot": "@Ichancy_TheKingBot" }, "IchancyTeacher": { "chat_id": 2557439706, "regex": r"\b[a-zA-Z0-9]{5,}\b", "bot": "@teacher_ichancy_bot" }, "IchancyDiamond": { "chat_id": 2687534765, "regex": r"\b[a-zA-Z0-9]{5,}\b", "bot": "@DiamondIchancyBot" }, "captain_ichancy": { "chat_id": 2199003618, "regex": r"\b[a-zA-Z0-9]{6,12}\b", "bot": "@ichancy_captain_bot", "pick_third": True }, "IchancyBasel": { "chat_id": 2115470972, "regex": r"\b[a-zA-Z0-9]{5,}\b", "bot": "@Ichancy_basel_bot" }, "ichancyDragon": { "chat_id": 2169021286, "regex": r"\b[a-zA-Z0-9]{5,}\b", "bot": "@ichancy_dragon_bot" }, "Malaki": { "chat_id": 2342644827, "regex": r"\b[a-zA-Z0-9]{5,}\b", "bot": "@almalaki_ichancy_bot" }, "Usd1": { # "chat_id": ,  # Add later "regex": r"\b[a-zA-Z0-9]{8,12}\b", "bot": "@ichancy_usd_bot" }, "Usd2": { # "chat_id": ,  # Add later "regex": r"\b[a-zA-Z0-9]{5,}\b", "bot": "@ichancy_tiger_usd_bot" }, "Usd3": { # "chat_id": ,  # Add later "regex": r"\b[a-zA-Z0-9]{5,}\b", "bot": "@ichancy_alcont_usd_bot" }, "Usd4": { # "chat_id": ,  # Add later "regex": r"\b[a-zA-Z0-9]{5,}\b", "bot": "@ichancy_betting_usd_bot" }, "savana": { "chat_id": 2389797854, "regex": r"\b[a-zA-Z0-9]{8,12}\b", "bot": "@ichancy_savana_bot", "pick_third": True } }
 
-# Logger to Telegram
-async def send_log(message):
-    for chat_id in allowed_chat_ids:
-        try:
-            await client.send_message(chat_id, f"[Log] {message}")
-        except:
-            pass
+client = TelegramClient(session_name, api_id, api_hash) selected_channels = set() monitoring_active = False
 
-def custom_print(*args, **kwargs):
-    msg = ' '.join(map(str, args))
-    log_buffer.append(msg)
-    asyncio.create_task(send_log(msg))
-    original_print(*args, **kwargs)
+@client.on(events.NewMessage(pattern='/start')) async def start_handler(event): if event.chat_id not in allowed_chat_ids: return await event.respond( "مرحباً! أرسل أسماء القنوات التي تريد مراقبتها، مفصولة بفاصلة.\n" "مثال:\n" "ichancy_zeus, ichancyTheKing\n\n" "ثم أرسل كلمة 's' لبدء المراقبة، أو 'st' لإيقافها." )
 
-original_print = print
-print = custom_print
+@client.on(events.NewMessage) async def handle_user_commands(event): global selected_channels, monitoring_active
 
-# Command handler
-@client.on(events.NewMessage)
-async def command_handler(event):
-    global selected_channels, monitoring_active
+if event.chat_id not in allowed_chat_ids:
+    return
 
-    if event.chat_id not in allowed_chat_ids:
+message = event.raw_text.strip()
+
+if message.startswith('/'):
+    return
+
+if message.lower() == "s":
+    if not selected_channels:
+        await event.respond("الرجاء اختيار القنوات أولاً.")
         return
+    monitoring_active = True
+    await event.respond("تم تفعيل المراقبة.")
 
-    text = event.raw_text.strip()
+elif message.lower() == "st":
+    selected_channels.clear()
+    monitoring_active = False
+    await event.respond("تم إيقاف المراقبة.")
 
-    if text == "/start":
-        await event.respond(
-            "مرحباً! أرسل أسماء القنوات التي تريد مراقبتها، مفصولة بفاصلة.\n"
-            "مثال:\n"
-            "ichancy_zeus, ichancyTheKing\n\n"
-            "ثم أرسل كلمة 's' لبدء المراقبة، أو 'st' لإيقافها."
-        )
-        return
-
-    if text.lower() == "s":
-        if not selected_channels:
-            await event.respond("الرجاء اختيار القنوات أولاً.")
-            return
-        monitoring_active = True
-        print("Monitoring activated.")
-        await event.respond("تم تفعيل المراقبة.")
-        return
-
-    if text.lower() == "st":
-        selected_channels.clear()
-        monitoring_active = False
-        print("Monitoring stopped.")
-        await event.respond("تم إيقاف المراقبة.")
-        return
-
-    possible = [x.strip() for x in text.split(',')]
-    if all(name in channels_config for name in possible):
-        selected_channels = set(possible)
+else:
+    possible_channels = [name.strip() for name in message.split(',')]
+    if all(name in channels_config for name in possible_channels):
+        selected_channels = set(possible_channels)
         await event.respond(f"تم اختيار القنوات: {', '.join(selected_channels)}")
-        print(f"Selected channels: {selected_channels}")
     else:
-        await event.respond("بعض القنوات غير صحيحة.")
+        await event.respond("بعض القنوات غير صحيحة، تأكد من كتابتها بشكل دقيق.")
 
-# Monitoring
-@client.on(events.NewMessage)
-async def monitor_handler(event):
-    if not monitoring_active or not event.chat or not getattr(event.chat, 'username', None):
-        return
+@client.on(events.NewMessage) async def monitor_handler(event): global monitoring_active if not monitoring_active: return
 
-    for name in selected_channels:
-        conf = channels_config[name]
-        if event.chat.username != conf["username"]:
-            continue
+for channel_name in selected_channels:
+    config = channels_config[channel_name]
+    channel_id = config.get("chat_id")
+    if not channel_id or event.chat_id != channel_id:
+        continue
 
-        matches = re.findall(conf["regex"], event.raw_text)
-        if matches:
-            try:
-                code = matches[2] if conf.get("pick_third") and len(matches) >= 3 else matches[0]
-                bot = conf["bot"]
+    match = re.findall(config["regex"], event.message.message)
+    if match:
+        try:
+            code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
+            bot = config["bot"]
 
-                async with client.conversation(bot, timeout=30) as conv:
-                    await conv.send_message('/start')
-                    res = await conv.get_response()
+            async with client.conversation(bot, timeout=30) as conv:
+                await conv.send_message('/start')
+                response = await conv.get_response()
 
-                    btn_pressed = False
-                    for row in res.buttons or []:
-                        for btn in (row if isinstance(row, list) else [row]):
-                            if 'كود' in btn.text:
-                                await btn.click()
-                                btn_pressed = True
-                                break
-                        if btn_pressed:
+                # التعامل مع زر فيه كلمة "كود"
+                button_pressed = False
+                btns = response.buttons or []
+                for row in btns:
+                    for btn in row:
+                        if 'كود' in btn.text:
+                            await btn.click()
+                            button_pressed = True
                             break
+                    if button_pressed:
+                        break
 
-                    if not btn_pressed:
-                        await client.send_message(list(allowed_chat_ids)[0], f"ما تم العثور على زر 'كود' في {bot}")
-                        print(f"زر كود غير موجود في {bot}")
-                        return
+                if not button_pressed:
+                    await client.send_message(
+                        list(allowed_chat_ids)[0],
+                        f"ما تم العثور على زر 'كود' في البوت {bot} بعد /start"
+                    )
+                    return
 
-                    await conv.send_message(code)
-                    await client.send_message(list(allowed_chat_ids)[0], f"تم استخراج الكود من @{conf['username']}:\n`{code}`\nأُرسل إلى: {bot}")
-                    print(f"Code `{code}` sent to bot {bot}")
-            except Exception as e:
-                err_msg = f"خطأ مع البوت {bot}: {str(e)}"
-                await client.send_message(list(allowed_chat_ids)[0], err_msg)
-                print(err_msg)
-            break
+                await conv.send_message(code)
 
-# Web endpoint
-async def handle(request):
-    return web.Response(text="Bot is running!")
+                await client.send_message(
+                    list(allowed_chat_ids)[0],
+                    f"تم استخراج كود من قناة ID {event.chat_id}:\n"
+                    f"الكود: `{code}`\n"
+                    f"تم إرساله إلى البوت: {bot}"
+                )
 
-app = web.Application()
-app.router.add_get("/", handle)
+                print(f"أُرسل الكود: {code} إلى {bot}")
 
-async def start_all():
-    await client.start()
-    print("Bot started...")
-    for msg in log_buffer:
-        await send_log(msg)
-    log_buffer.clear()
-    runner = web.AppRunner(app)
-    await runner.setup()
-    await web.TCPSite(runner, '0.0.0.0', 8080).start()
-    await client.run_until_disconnected()
+        except Exception as e:
+            await client.send_message(
+                list(allowed_chat_ids)[0],
+                f"حصل خطأ أثناء التعامل مع البوت {config['bot']}:\n{str(e)}"
+            )
+        break
 
-if __name__ == "__main__":
-    asyncio.run(start_all())
+Web server
+
+async def handle(request): return web.Response(text="Bot is running!")
+
+app = web.Application() app.router.add_get("/", handle)
+
+async def start_all(): await client.start() print("Bot is running...") client_loop = asyncio.create_task(client.run_until_disconnected())
+
+runner = web.AppRunner(app)
+await runner.setup()
+site = web.TCPSite(runner, '0.0.0.0', 8080)
+await site.start()
+print("Web server is running on http://0.0.0.0:8080")
+await client_loop
+
+if name == "main": asyncio.run(start_all())
+
