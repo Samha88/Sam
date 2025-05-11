@@ -14,53 +14,53 @@ allowed_chat_ids = {8113892076}  # ← معرفك الشخصي
 # تعريف القنوات والصيغ والبوتات
 channels_config = {
     "ichancy_saw": {
-        "chat_id": None,
+        "username": "ichancy_saw",
         "regex": r"\b[a-zA-Z0-9]{8,12}\b",
         "bot": "@ichancy_saw_bot"
     },
     "ichancyTheKing": {
-        "chat_id": 2176585065,
+        "username": "ichancyTheKing",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@Ichancy_TheKingBot"
     },
     "captain_ichancy": {
-        "chat_id": 2199003618,
+        "username": "captain_ichancy",
         "regex": r"\b[a-zA-Z0-9]{6,12}\b",
         "bot": "@ichancy_captain_bot",
         "pick_third": True
     },
     "IchancyTeacher": {
-        "chat_id": 2557439706,
+        "username": "IchancyTeacher",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@teacher_ichancy_bot"
     },
     "IchancyDiamond": {
-        "chat_id": 2687534765,
+        "username": "IchancyDiamond",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@DiamondIchancyBot"
     },
     "ichancy_zeus": {
-        "chat_id": 2326208433,
+        "username": "ichancy_zeus",
         "regex": r"\b[a-zA-Z0-9]{8,12}\b",
         "bot": "@Ichancy_zeus_bot"
     },
     "IchancyBasel": {
-        "chat_id": 2115470972,
+        "username": "IchancyBasel",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@Ichancy_basel_bot"
     },
     "ichancyDragon": {
-        "chat_id": 2169021286,
+        "username": "ichancyDragon",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@ichancy_dragon_bot"
     },
     "Malaki": {
-        "chat_id": 2342644827,
+        "username": "Malaki",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@almalaki_ichancy_bot"
     },
     "savana": {
-        "chat_id": 2389797854,
+        "username": "savana",
         "regex": r"\b[a-zA-Z0-9]{8,12}\b",
         "bot": "@ichancy_savana_bot",
         "pick_third": True
@@ -72,6 +72,7 @@ client = TelegramClient(session_name, api_id, api_hash)
 selected_channels = set()
 monitoring_active = False
 
+# /start - إرسال التعليمات
 @client.on(events.NewMessage(pattern='/start'))
 async def start_handler(event):
     if event.chat_id not in allowed_chat_ids:
@@ -79,10 +80,11 @@ async def start_handler(event):
     await event.respond(
         "مرحباً! أرسل أسماء القنوات التي تريد مراقبتها، مفصولة بفاصلة.\n"
         "مثال:\n"
-        "IchancyTeacher, ichancy_zeus\n\n"
+        "ichancy_saw, ichancyTheKing\n\n"
         "ثم أرسل كلمة 's' لبدء المراقبة، أو 'st' لإيقافها."
     )
 
+# استقبال أوامر المستخدم
 @client.on(events.NewMessage)
 async def handle_user_commands(event):
     global selected_channels, monitoring_active
@@ -115,32 +117,36 @@ async def handle_user_commands(event):
         else:
             await event.respond("بعض القنوات غير صحيحة، تأكد من كتابتها بشكل دقيق.")
 
+# مراقبة رسائل القنوات
 @client.on(events.NewMessage)
 async def monitor_handler(event):
     global monitoring_active
-    if not monitoring_active or not event.is_channel:
+    if not monitoring_active:
         return
 
     for channel_name in selected_channels:
         config = channels_config[channel_name]
-        if config.get("chat_id") and event.chat_id != config["chat_id"]:
-            continue
-        if config.get("chat_id") is None and getattr(event.chat, "username", "").lower() != channel_name.lower():
+        if event.chat.username != config["username"]:
             continue
 
         match = re.findall(config["regex"], event.message.message)
         if match:
-            code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
+            if config.get("pick_third") and len(match) >= 3:
+                code = match[2]
+            else:
+                code = match[0]
             await client.send_message(config["bot"], code)
             print(f"أُرسل الكود: {code} إلى {config['bot']}")
             break
 
+# Web service للتأكد أن السيرفر شغال
 async def handle(request):
     return web.Response(text="Bot is running!")
 
 app = web.Application()
 app.router.add_get("/", handle)
 
+# تشغيل البوت والسيرفر
 async def start_all():
     await client.start()
     print("Bot is running...")
