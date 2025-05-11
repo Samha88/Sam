@@ -3,26 +3,17 @@ import re
 from telethon import TelegramClient, events
 from aiohttp import web
 
-# Telegram credentials
+# معلومات حساب تيليجرام
 api_id = 22707838
 api_hash = '7822c50291a41745fa5e0d63f21bbfb6'
 session_name = 'my_session.session'
 
-# Allowed user
+# معرف المستخدم المسموح له بالتفاعل مع البوت
 allowed_chat_ids = {8113892076}
+admin_id = list(allowed_chat_ids)[0]
 
-# Channel configuration using chat_id
+# ملف القنوات مع chat_id
 channels_config = {
-    "ichancy_zeus": {
-        "chat_id": 2326208433,
-        "regex": r"\b[a-zA-Z0-9]{8,12}\b",
-        "bot": "@Ichancy_zeus_bot"
-    },
-    "ichancyTheKing": {
-        "chat_id": 2176585065,
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@Ichancy_TheKingBot"
-    },
     "IchancyTeacher": {
         "chat_id": 2557439706,
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
@@ -32,6 +23,11 @@ channels_config = {
         "chat_id": 2687534765,
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@DiamondIchancyBot"
+    },
+    "ichancy_zeus": {
+        "chat_id": 2326208433,
+        "regex": r"\b[a-zA-Z0-9]{8,12}\b",
+        "bot": "@Ichancy_zeus_bot"
     },
     "captain_ichancy": {
         "chat_id": 2199003618,
@@ -45,34 +41,19 @@ channels_config = {
         "bot": "@Ichancy_basel_bot"
     },
     "ichancyDragon": {
-        "chat_id": 2680635160,
+        "chat_id": 2169021286,
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@ichancy_dragon_bot"
+    },
+    "ichancyTheKing": {
+        "chat_id": 2176585065,
+        "regex": r"\b[a-zA-Z0-9]{5,}\b",
+        "bot": "@Ichancy_TheKingBot"
     },
     "Malaki": {
         "chat_id": 2342644827,
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@almalaki_ichancy_bot"
-    },
-    "Usd1": {
-        # "chat_id": ,  # Add later
-        "regex": r"\b[a-zA-Z0-9]{8,12}\b",
-        "bot": "@ichancy_usd_bot"
-    },
-    "Usd2": {
-        # "chat_id": ,  # Add later
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@ichancy_tiger_usd_bot"
-    },
-    "Usd3": {
-        # "chat_id": ,  # Add later
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@ichancy_alcont_usd_bot"
-    },
-    "Usd4": {
-        # "chat_id": ,  # Add later
-        "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@ichancy_betting_usd_bot"
     },
     "savana": {
         "chat_id": 2389797854,
@@ -137,58 +118,67 @@ async def monitor_handler(event):
 
     for channel_name in selected_channels:
         config = channels_config[channel_name]
-        channel_id = config.get("chat_id")
-        if not channel_id or event.chat_id != channel_id:
+        expected_chat_id = config["chat_id"]
+        if event.chat_id != expected_chat_id:
+            msg = f"[تجاهل] الرسالة من chat_id {event.chat_id} لا تطابق {expected_chat_id} ({channel_name})"
+            print(msg)
+            await client.send_message(admin_id, msg)
             continue
+
+        print(f"[رصد] رسالة من {channel_name} ({event.chat_id}): {event.message.message}")
 
         match = re.findall(config["regex"], event.message.message)
         if match:
             try:
                 code = match[2] if config.get("pick_third") and len(match) >= 3 else match[0]
-                bot = config["bot"]
 
+                bot = config["bot"]
                 async with client.conversation(bot, timeout=30) as conv:
                     await conv.send_message('/start')
                     response = await conv.get_response()
 
-                    # التعامل مع زر فيه كلمة "كود"
                     button_pressed = False
                     btns = response.buttons or []
                     for row in btns:
-                        for btn in row:
-                            if 'كود' in btn.text:
-                                await btn.click()
+                        if isinstance(row, list):
+                            for btn in row:
+                                if 'كود' in btn.text:
+                                    await btn.click()
+                                    button_pressed = True
+                                    break
+                        else:
+                            if 'كود' in row.text:
+                                await row.click()
                                 button_pressed = True
-                                break
                         if button_pressed:
                             break
 
                     if not button_pressed:
-                        await client.send_message(
-                            list(allowed_chat_ids)[0],
-                            f"ما تم العثور على زر 'كود' في البوت {bot} بعد /start"
-                        )
+                        msg = f"ما تم العثور على زر 'كود' في البوت {bot} بعد /start"
+                        await client.send_message(admin_id, msg)
+                        print(msg)
                         return
 
                     await conv.send_message(code)
 
-                    await client.send_message(
-                        list(allowed_chat_ids)[0],
+                    msg = (
                         f"تم استخراج كود من قناة ID {event.chat_id}:\n"
                         f"الكود: `{code}`\n"
                         f"تم إرساله إلى البوت: {bot}"
                     )
-
-                    print(f"أُرسل الكود: {code} إلى {bot}")
+                    await client.send_message(admin_id, msg)
+                    print(msg)
 
             except Exception as e:
-                await client.send_message(
-                    list(allowed_chat_ids)[0],
-                    f"حصل خطأ أثناء التعامل مع البوت {config['bot']}:\n{str(e)}"
-                )
-            break
+                msg = f"خطأ أثناء التعامل مع البوت {config['bot']}:\n{str(e)}"
+                await client.send_message(admin_id, msg)
+                print(msg)
+        else:
+            msg = f"[بدون كود] ما تم التقاط كود من الرسالة في {channel_name} ({event.chat_id})"
+            await client.send_message(admin_id, msg)
+            print(msg)
 
-# Web server
+# Web Service
 async def handle(request):
     return web.Response(text="Bot is running!")
 
@@ -209,4 +199,3 @@ async def start_all():
 
 if __name__ == "__main__":
     asyncio.run(start_all())
-    
