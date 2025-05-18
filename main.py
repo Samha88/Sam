@@ -54,10 +54,10 @@ channels_config = {
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
         "bot": "@ichancy_dragon_bot"
     },
-    "Malaki": {
-        "username": "Malaki",
+    "Sonic": {
+        "username": "sonic_bot_Ichancy",
         "regex": r"\b[a-zA-Z0-9]{5,}\b",
-        "bot": "@almalaki_ichancy_bot"
+        "bot": "@sonic_ichancy_bot"
     },
     "savana": {
         "username": "savana",
